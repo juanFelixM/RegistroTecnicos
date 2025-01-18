@@ -1,0 +1,83 @@
+﻿@page "/Tecnico/Delete/{TecnicoId:int}"
+@inject NavigationManager NavigationManager
+@inject TecnicosService TecnicosService
+
+<div class="card">
+    <div class="card-header text-center">
+        <strong>Eliminar Técnico</strong>
+    </div>
+    <div class="card-body">
+        <p class="text-danger text-center">
+            ¿Estás seguro de que quieres eliminar este técnico?
+        </p>
+
+        <div class="card">
+            <div class="card-body">
+                <p><strong>Técnico ID:</strong> @TecnicoId</p>
+                <p><strong>Nombre:</strong> @Nombre</p>
+                <p><strong>Sueldo por Hora:</strong> @SueldoPorHora</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-footer text-center" style="margin-top: 15px;">
+        <button class="btn btn-danger" @onclick="EliminarTecnico" style="margin-right: 10px;">Eliminar</button>
+        <button class="btn btn-secondary" @onclick="Volver">Volver</button>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int TecnicoId { get; set; }
+
+    private string Nombre { get; set; } = string.Empty;
+    private decimal SueldoPorHora { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var tecnico = await TecnicosService.Buscar(TecnicoId);
+            if (tecnico != null)
+            {
+                Nombre = tecnico.Nombre;
+                SueldoPorHora = tecnico.SueldoHora;
+            }
+            else
+            {
+                NavigationManager.NavigateTo("/Tecnico/Index");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al obtener el técnico: {ex.Message}");
+            NavigationManager.NavigateTo("/Tecnico/Index");
+        }
+    }
+
+    private async Task EliminarTecnico()
+    {
+        try
+        {
+            var eliminado = await TecnicosService.Eliminar(TecnicoId);
+            if (eliminado)
+            {
+                Console.WriteLine("Técnico eliminado correctamente.");
+                NavigationManager.NavigateTo("/Tecnico/Index");
+            }
+            else
+            {
+                Console.WriteLine("Error: No se pudo eliminar el técnico.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al eliminar el técnico: {ex.Message}");
+        }
+    }
+
+    private void Volver()
+    {
+        NavigationManager.NavigateTo("/Tecnico/Index");
+    }
+}

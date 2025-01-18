@@ -1,0 +1,103 @@
+﻿@page "/Tecnico/Create"
+@inject TecnicosService TecnicosService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<PageTitle>Registro de Técnico</PageTitle>
+<EditForm Model="Tecnico" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+
+    <div class="container mt-4">
+        <div class="card shadow-lg">
+            <div class="card-header text-center bg-primary text-white">
+                <h5 class="card-title">Registro de Técnicos</h5>
+            </div>
+
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label"><strong>Técnico ID</strong></label>
+                    <InputNumber class="form-control" @bind-Value="Tecnico.TecnicoId" readonly />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Nombre</strong></label>
+                    <InputText class="form-control" @bind-Value="Tecnico.Nombre" />
+                    <ValidationMessage For="@(() => Tecnico.Nombre)" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Sueldo por Hora</strong></label>
+                    <InputNumber class="form-control" @bind-Value="Tecnico.SueldoHora" />
+                    <ValidationMessage For="@(() => Tecnico.SueldoHora)" />
+                </div>
+            </div>
+
+            <div class="card-footer text-center">
+                <button type="button" class="btn btn-outline-primary me-2" @onclick="Nuevo">
+                    <span class="bi bi-file-earmark-plus"></span> Nuevo
+                </button>
+
+                <button type="submit" class="btn btn-outline-success me-2">
+                    <span class="bi bi-floppy"></span> Guardar
+                </button>
+
+                <a href="/Tecnico/Index" class="btn btn-outline-danger">
+                    <span class="bi bi-arrow-left"></span> Retroceder
+                </a>
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public Tecnico Tecnico { get; set; } = new Tecnico();
+
+    private async Task Guardar()
+    {
+        if (!Validar())
+        {
+            return;
+        }
+
+        var existeNombre = await TecnicosService.ExisteNombreDuplicado(Tecnico.Nombre, Tecnico.TecnicoId);
+        if (existeNombre)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Error: Ya existe un técnico con este nombre.");
+            return;
+        }
+
+        var guardado = await TecnicosService.Guardar(this.Tecnico);
+        if (guardado)
+        {
+            Nuevo();
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Error al guardar el registro.");
+        }
+    }
+
+    private bool Validar()
+    {
+        if (string.IsNullOrWhiteSpace(Tecnico.Nombre) || Tecnico.SueldoHora <= 0)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    private void Nuevo()
+    {
+        this.Tecnico = new Tecnico
+            {
+                SueldoHora = 0
+            };
+    }
+
+    protected override void OnInitialized()
+    {
+        Nuevo();
+    }
+}

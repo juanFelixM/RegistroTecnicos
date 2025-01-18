@@ -1,0 +1,128 @@
+﻿@page "/Tecnico/Index"
+@using RegistroTecnicos.Models
+@inject TecnicosService TecnicosService
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 text-center w-100">Consulta de Técnicos</h5>
+        <a href="Tecnico/Create" class="btn btn-success d-flex align-items-center">
+            <i class="bi bi-plus-circle me-1"></i> Crear
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3 align-items-end">
+            <div class="col-md-3">
+                <label for="filter" class="form-label">Filtrar por:</label>
+                <select class="form-select" id="filter" @bind="filtroSeleccionado">
+                    <option value="TecnicoID">TecnicoID</option>
+                    <option value="Nombre">Nombre</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="search" class="form-label">Búsqueda:</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="search" placeholder="Ingrese su búsqueda" @bind="textoBusqueda" />
+                    <button class="btn btn-primary d-flex align-items-center" @onclick="Filtrar">
+                        <i class="bi bi-search me-1"></i> Buscar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        @if (tecnicos == null)
+        {
+            <div class="d-flex justify-content-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+            </div>
+        }
+        else if (!tecnicosFiltrados.Any())
+        {
+            <div class="alert alert-info text-center">
+                No hay técnicos registrados.
+            </div>
+        }
+        else
+        {
+            <table class="table table-striped">
+                <thead class="table-light">
+                    <tr>
+                        <th>TecnicoID</th>
+                        <th>Nombres</th>
+                        <th>Sueldo por Hora</th>
+                        <th class="text-center">Editar</th>
+                        <th class="text-center">Eliminar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var tecnico in tecnicosFiltrados)
+                    {
+                        <tr>
+                            <td>@tecnico.TecnicoId</td>
+                            <td>@tecnico.Nombre</td>
+                            <td>@tecnico.SueldoHora.ToString("C")</td>
+                            <td class="text-center">
+                                <a href="Tecnico/Create?tecnicoId=@tecnico.TecnicoId"
+                                   class="btn btn-outline-success btn-sm d-flex align-items-center justify-content-center"
+                                   style="width: 35px; height: 35px; padding: 5px; border-radius: 5px;">
+                                    <i class="bi bi-pencil" style="color: green;"></i>
+                                </a>
+                            </td>
+                            <td class="text-center">
+                                <a href="Tecnico/Delete/@tecnico.TecnicoId"
+                                   class="btn btn-outline-danger btn-sm d-flex align-items-center justify-content-center"
+                                   style="width: 35px; height: 35px; padding: 5px; border-radius: 5px;">
+                                    <i class="bi bi-trash" style="color: red;"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+@code {
+    private List<Tecnico>? tecnicos;
+    private List<Tecnico>? tecnicosFiltrados;
+    private string filtroSeleccionado = "TecnicoID";
+    private string textoBusqueda = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarTecnicos();
+    }
+
+    private async Task CargarTecnicos()
+    {
+        try
+        {
+            tecnicos = await TecnicosService.ObtenerTodosLosTecnicos();
+            tecnicosFiltrados = tecnicos;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar los técnicos: {ex.Message}");
+        }
+    }
+
+    private void Filtrar()
+    {
+        if (tecnicos != null)
+        {
+            if (string.IsNullOrEmpty(textoBusqueda))
+            {
+                tecnicosFiltrados = tecnicos;
+            }
+            else
+            {
+                tecnicosFiltrados = tecnicos.Where(t =>
+                    (filtroSeleccionado == "TecnicoID" && t.TecnicoId.ToString().Contains(textoBusqueda, StringComparison.OrdinalIgnoreCase)) ||
+                    (filtroSeleccionado == "Nombre" && t.Nombre.Contains(textoBusqueda, StringComparison.OrdinalIgnoreCase))
+                ).ToList();
+            }
+        }
+    }
+}
